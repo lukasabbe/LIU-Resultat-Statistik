@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./autocomplete.css">
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <title>TentaStats</title>
+</head>
+<body>
+    <div class = "cornor">
+        <a href="index.html">Back</a>
+    </div>
+    <div class = "middle">
+        <h1>LIU tenta statistik</h1>
+    </div>
+    <div class = "middle">
+        <h2 id="course"></h2>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            const url = window.location.search.substring(1);
+            const params = new URLSearchParams(url);
+            const course = params.get("course");
+            const courseData = await (await fetch(`https://liutentor.lukasabbe.com/api/courses/${course}`)).json();
+            document.getElementById("course").innerHTML = courseData.courseCode + " - " + courseData.courseNameSwe;
+            let id = 0;
+            for(const module of courseData.modules) {
+                const moduleDiv = document.createElement("div");
+                moduleDiv.classList.add("middle");
+                const canvas = document.createElement("canvas");
+                canvas.id = id.toString();
+                canvas.style = "width:100%;max-width:600px"
+                moduleDiv.appendChild(canvas);
+                document.body.appendChild(moduleDiv);
+                
+                const labels = module.grades.map(grade => grade.grade);
+                const values = module.grades.map(grade => grade.quantity);
+                const colors = labels.map((label) => {
+                    return get_color(label);
+                })
+                let amount = 0;
+                for(const grade of module.grades) {
+                    amount += grade.quantity;
+                }
+                new Chart(id.toString(), {
+                    type: "pie",
+                    data : {
+                        labels: labels,
+                        datasets: [{
+                            backgroundColor: colors,
+                            data: values,
+                        }]
+                    },
+                    options : {
+                        title: {
+                            display: true,
+                            text: module.date.split("T")[0] + " - " + module.moduleCode + " - " + amount + " personer",
+                        }
+
+                    }
+                });
+                id++;
+            }
+        };
+        function get_color(label){
+            switch (label) {
+                case "5":
+                    return "#ef8a8a"
+                case "4":
+                    return "#efc98a"
+                case "3":
+                    return "#acef8a"
+                case "U":
+                    return "#8aefb5"
+                case "G":
+                    return "#8aefec"
+                default:
+                    return "#8aefec"
+            }
+        }
+    </script>
+</body>
+</html>
