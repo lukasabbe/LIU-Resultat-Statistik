@@ -51,7 +51,9 @@ export default function CircleChart({ course }) {
     plugins: {
       title: {
         display: true,
-        text: course.moduleCode + " - " + new Date(course.date).toLocaleDateString(),
+        text: [course.moduleCode + " - " + new Date(course.date).toLocaleDateString(),
+          "totalt "+course.grades.reduce((acc, grade) => acc + grade.quantity, 0) + " studenter"
+        ],
         color: textColor,
         font: {
           size: 18,
