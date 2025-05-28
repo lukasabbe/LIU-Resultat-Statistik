@@ -1,22 +1,84 @@
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html lang="sv">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>LIU tentor</title>
+    </head>
+    <body>
+        <button class="theme-toggle" onclick="window.toggleTheme()" aria-label="Byt tema">
+            🌓
+        </button>
+        <slot />
+    </body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+    :root {
+        --bg: #e9eae9;
+        --text: #222;
+    }
+    [data-theme="dark"] {
+        --bg: #272827;
+        --text: #eee;
+    }
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        transition: background 0.3s, color 0.3s;
+    }
+    .theme-toggle {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: 2.5px solid var(--text);
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+    .theme-toggle:active {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+    @media (max-width: 600px) {
+        .theme-toggle {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+            top: 12px;
+            right: 12px;
+        }
+    }
 </style>
+
+<script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        };
+        window.toggleTheme = () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            setTheme(current === 'light' ? 'dark' : 'light');
+        };
+        // On load, set theme from localStorage or system
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+            setTheme(saved);
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+        }
+    });
+</script>
