@@ -1,4 +1,5 @@
-import { Group, Title, ActionIcon, useMantineColorScheme, useComputedColorScheme } from '@mantine/core';
+import { Group, Title, ActionIcon, useMantineColorScheme, useComputedColorScheme, Button } from '@mantine/core';
+import { useTranslation } from 'react-i18next';
 
 // Icons for the sun and moon
 const SunIcon = () => (
@@ -11,22 +12,36 @@ const MoonIcon = () => (
 export function Header() {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
+  const { t, i18n } = useTranslation(); // <--- Get translation function
 
   const toggleColorScheme = () => {
     setColorScheme(computedColorScheme === 'dark' ? 'light' : 'dark');
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'sv' ? 'en' : 'sv';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
     <Group justify="space-between" mb="xl" py="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
-      <Title order={3}>LIU statistik</Title>
-      <ActionIcon
-        onClick={toggleColorScheme}
-        variant="default"
-        size="lg"
-        aria-label="Toggle color scheme"
-      >
-        {computedColorScheme === 'dark' ? <SunIcon /> : <MoonIcon />}
-      </ActionIcon>
+      <Title order={3}>📊 {t('title')}</Title> {/* <--- Translated Title */}
+      
+      <Group>
+        {/* Language Toggle Button */}
+        <Button variant="default" size="xs" onClick={toggleLanguage}>
+          {i18n.language === 'sv' ? '🇸🇪 SV' : '🇬🇧 EN'}
+        </Button>
+
+        <ActionIcon
+          onClick={toggleColorScheme}
+          variant="default"
+          size="lg"
+          aria-label="Toggle color scheme"
+        >
+          {computedColorScheme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </ActionIcon>
+      </Group>
     </Group>
   );
 }

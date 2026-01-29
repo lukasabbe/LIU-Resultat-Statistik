@@ -12,22 +12,25 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { fetchGradeStats, fetchAllCourses } from './api';
 import { Header } from './Header';
+import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async'; // Don't forget Helmet for the tab title!
 
 function App() {
-const getUrlParam = () => {
+  const { t, i18n } = useTranslation();
+
+  // Helper to read URL safely
+  const getUrlParam = () => {
     const params = new URLSearchParams(window.location.search);
     return params.get('course')?.toUpperCase() || '';
   };
 
+  // Initialize state with URL param (Lazy Initialization)
   const [searchValue, setSearchValue] = useState(getUrlParam);
-  
-  // We also initialize selectedCourse with the URL param immediately
   const [selectedCourse, setSelectedCourse] = useState<string | null>(() => {
     const code = getUrlParam();
     return code || null;
   });
   
-  // Debugging variable (We will show this on screen)
   const [debouncedSearch] = useDebouncedValue(searchValue, 300);
 
   // UI State
@@ -74,9 +77,9 @@ const getUrlParam = () => {
 
       return (
         <Card shadow="sm" padding="xs" radius="sm" withBorder>
-          <Text fw={700} size="sm">Grade: {gradeName}</Text>
-          <Text size="xs">Quantity: {data.quantity}</Text>
-          <Text size="xs" c="dimmed">Percentage: {data.percentage}%</Text>
+          <Text fw={700} size="sm">{t('tooltipGrade')}: {gradeName}</Text>
+          <Text size="xs">{t('tooltipQty')}: {data.quantity}</Text>
+          <Text size="xs" c="dimmed">{t('tooltipPerc')}: {data.percentage}%</Text>
         </Card>
       );
     }
@@ -117,30 +120,41 @@ const getUrlParam = () => {
     return Array.from(new Set(stats.modules.map(m => m.moduleCode)));
   }, [stats]);
 
+  // Helper: Get correct language for course name
+  const currentCourseName = stats 
+    ? (i18n.language === 'sv' ? stats.courseNameSwe : stats.courseNameEng) 
+    : '';
+
   return (
     <Container size="md" pb="xl">
+      <Helmet>
+        <title>
+            {selectedCourse ? `${selectedCourse} | ${t('title')}` : t('title')}
+        </title>
+      </Helmet>
+
       <Header />
 
       <Card withBorder shadow="sm" radius="md" mb="xl">
         <Group align="end">
           <Autocomplete
-            label="Search Course"
-            placeholder="e.g. TDDE35"
+            label={t('title')}
+            placeholder={t('searchPlaceholder')}
             data={filteredCourses}
             value={searchValue}
             onChange={setSearchValue}
             style={{ flex: 1 }}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <Button onClick={handleSearch}>Search</Button>
+          <Button onClick={handleSearch}>{t('searchButton')}</Button>
         </Group>
       </Card>
 
       {isLoading && <Center py="xl"><Loader size="lg" /></Center>}
       
       {isError && (
-        <Alert color="red" title="Error" mb="lg">
-          Failed to fetch data. <br/>{(error as Error).message}
+        <Alert color="red" title={t('errorTitle')} mb="lg">
+          {t('errorFetch')} <br/>{(error as Error).message}
         </Alert>
       )}
 
@@ -152,13 +166,13 @@ const getUrlParam = () => {
               <Group justify="space-between">
                 <div>
                   <Text size="xs" fw={700} c="blue">{stats.courseCode}</Text>
-                  <Title order={2} size="h3">{stats.courseNameEng}</Title>
+                  <Title order={2} size="h3">{currentCourseName}</Title>
                 </div>
               </Group>
               
               <Group justify="space-between" mt="xs">
                 <Select 
-                  placeholder="Filter by Exam"
+                  placeholder={t('filterPlaceholder')}
                   data={uniqueModuleCodes}
                   value={moduleFilter}
                   onChange={(val) => { setModuleFilter(val); setActivePage(1); }}
@@ -170,8 +184,8 @@ const getUrlParam = () => {
                   value={chartType}
                   onChange={setChartType}
                   data={[
-                    { label: 'Bar Chart', value: 'bar' },
-                    { label: 'Pie Chart', value: 'pie' },
+                    { label: t('chartBar'), value: 'bar' },
+                    { label: t('chartPie'), value: 'pie' },
                   ]}
                 />
               </Group>
@@ -185,7 +199,9 @@ const getUrlParam = () => {
                 <Card withBorder shadow="sm" radius="md">
                   <Group justify="space-between" mb="sm">
                     <Text fw={700}>{mod.moduleCode}</Text>
-                    <Text size="sm" c="dimmed">{new Date(mod.date).toLocaleDateString()}</Text>
+                    <Text size="sm" c="dimmed">
+                      {new Date(mod.date).toLocaleDateString(i18n.language === 'sv' ? 'sv-SE' : 'en-US')}
+                    </Text>
                   </Group>
                   
                   {(() => {
@@ -243,7 +259,7 @@ const getUrlParam = () => {
           </Grid>
           
           {currentModules.length === 0 && (
-            <Text c="dimmed" ta="center" py="xl">No exams found for this filter.</Text>
+            <Text c="dimmed" ta="center" py="xl">{t('noExams')}</Text>
           )}
 
           {totalPages > 1 && (
