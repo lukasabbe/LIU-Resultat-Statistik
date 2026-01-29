@@ -14,19 +14,20 @@ import { fetchGradeStats, fetchAllCourses } from './api';
 import { Header } from './Header';
 
 function App() {
-  // FIX: Check URL immediately when initializing state (Lazy Initialization)
-  // This avoids the "Cascading Render" error entirely.
-  const [searchValue, setSearchValue] = useState(() => {
+const getUrlParam = () => {
     const params = new URLSearchParams(window.location.search);
     return params.get('course')?.toUpperCase() || '';
-  });
+  };
 
-  // Initialize selectedCourse so the API fetches data immediately if URL has a course
+  const [searchValue, setSearchValue] = useState(getUrlParam);
+  
+  // We also initialize selectedCourse with the URL param immediately
   const [selectedCourse, setSelectedCourse] = useState<string | null>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('course')?.toUpperCase() || null;
+    const code = getUrlParam();
+    return code || null;
   });
-
+  
+  // Debugging variable (We will show this on screen)
   const [debouncedSearch] = useDebouncedValue(searchValue, 300);
 
   // UI State
