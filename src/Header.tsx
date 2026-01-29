@@ -25,12 +25,12 @@ export function Header() {
 
   return (
     <Group justify="space-between" mb="xl" py="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
-      <Title order={3}>📊 {t('title')}</Title> {/* <--- Translated Title */}
+      <Title order={3}>{t('title')}</Title> {/* <--- Translated Title */}
       
       <Group>
         {/* Language Toggle Button */}
         <Button variant="default" size="xs" onClick={toggleLanguage}>
-          {i18n.language === 'sv' ? '🇸🇪 SV' : '🇬🇧 EN'}
+          {i18n.language === 'sv' ? 'SV' : 'EN'}
         </Button>
 
         <ActionIcon
