@@ -4,7 +4,7 @@ import {
   Loader, Center, Alert, Grid, Stack, Select, Pagination, Title, 
   SegmentedControl 
 } from '@mantine/core';
-import { useDebouncedValue } from '@mantine/hooks'; // <--- NEW IMPORT
+import { useDebouncedValue } from '@mantine/hooks';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer,
   PieChart, Pie
@@ -14,13 +14,22 @@ import { fetchGradeStats, fetchAllCourses } from './api';
 import { Header } from './Header';
 
 function App() {
-  const [searchValue, setSearchValue] = useState('');
-  
-  // PERFORMANCE FIX: 
-  // We create a "debounced" variable that only updates 300ms after you stop typing.
+  // FIX: Check URL immediately when initializing state (Lazy Initialization)
+  // This avoids the "Cascading Render" error entirely.
+  const [searchValue, setSearchValue] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('course')?.toUpperCase() || '';
+  });
+
+  // Initialize selectedCourse so the API fetches data immediately if URL has a course
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('course')?.toUpperCase() || null;
+  });
+
   const [debouncedSearch] = useDebouncedValue(searchValue, 300);
 
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  // UI State
   const [moduleFilter, setModuleFilter] = useState<string | null>(null);
   const [chartType, setChartType] = useState('bar'); 
   const [activePage, setActivePage] = useState(1);
@@ -33,17 +42,13 @@ function App() {
     staleTime: 1000 * 60 * 60, 
   });
 
-  // OPTIMIZED FILTERING:
-  // We now depend on 'debouncedSearch' instead of 'searchValue'.
-  // The heavy .filter() loop only runs when the user pauses typing.
   const filteredCourses = useMemo(() => {
     if (!courseList) return [];
     if (!debouncedSearch) return []; 
-    
     return courseList
       .filter((code) => code.toLowerCase().includes(debouncedSearch.toLowerCase()))
       .slice(0, 10); 
-  }, [courseList, debouncedSearch]); // <--- Changed dependency here
+  }, [courseList, debouncedSearch]);
   
   // 2. Fetch Stats
   const { data: stats, isLoading, isError, error } = useQuery({
@@ -77,12 +82,17 @@ function App() {
     return null;
   };
 
+  // Update URL when searching
   const handleSearch = () => {
-    // We use the immediate searchValue for the submit action so it feels responsive
     if (searchValue) {
-      setSelectedCourse(searchValue.toUpperCase());
+      const code = searchValue.toUpperCase();
+      setSelectedCourse(code);
       setModuleFilter(null); 
       setActivePage(1);      
+
+      // Update the browser URL without reloading
+      const newUrl = `${window.location.pathname}?course=${code}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
     }
   };
 
@@ -214,7 +224,7 @@ function App() {
                                  cx="50%"
                                  cy="50%"
                                  outerRadius={100}
-                                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                 label={({ name, percent }) => `${name} ${(percent as number * 100).toFixed(0)}%`}
                                >
                                  {chartData.map((entry, i) => (
                                    <Cell key={`cell-${i}`} fill={entry.fill} />
