@@ -7,7 +7,7 @@ import {
 import { useDebouncedValue } from '@mantine/hooks';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer,
-  PieChart, Pie
+  PieChart, Pie, LineChart, Line
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchGradeStats, fetchAllCourses } from './api';
@@ -86,6 +86,20 @@ function App() {
     return null;
   };
 
+  const TrendTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Card shadow="sm" padding="xs" radius="sm" withBorder>
+          <Text fw={700} size="sm">{t('date')}: {label}</Text>
+          <Text size="xs">{t('averageGrade')}: {data.average.toFixed(2)}</Text>
+          <Text size="xs" c="dimmed">{t('responses')}: {data.total}</Text>
+        </Card>
+      );
+    }
+    return null;
+  };
+
   // Update URL when searching
   const handleSearch = () => {
     if (searchValue) {
@@ -108,6 +122,31 @@ function App() {
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return filtered;
   }, [stats, moduleFilter]);
+
+  const evaluationTrend = useMemo(() => {
+    if (!stats?.evaluationReports?.length) return [];
+    return [...stats.evaluationReports]
+      .sort((a, b) => new Date(a.reportDate).getTime() - new Date(b.reportDate).getTime())
+      .map((report) => {
+        const entries = Object.entries(report.scores)
+          .map(([grade, count]) => ({ grade: Number(grade), count }))
+          .filter((entry) => entry.grade >= 1 && entry.grade <= 5);
+
+        const total = entries.reduce((acc, curr) => acc + curr.count, 0);
+        const weighted = entries.reduce((acc, curr) => acc + curr.grade * curr.count, 0);
+        const average = total > 0 ? weighted / total : 0;
+        const dateLabel = new Date(report.reportDate).toLocaleDateString(
+          i18n.language === 'sv' ? 'sv-SE' : 'en-US'
+        );
+
+        return {
+          reportId: report.reportId,
+          dateLabel,
+          average,
+          total,
+        };
+      });
+  }, [stats, i18n.language]);
 
   const totalPages = Math.ceil(processedModules.length / ITEMS_PER_PAGE);
   const currentModules = processedModules.slice(
@@ -160,6 +199,43 @@ function App() {
 
       {stats && (
         <Stack gap="lg">
+          {evaluationTrend.length > 0 ? (
+            <Card withBorder shadow="md" radius="md">
+              <Group justify="space-between" mb="sm">
+                <Title order={3} size="h4">{t('evaluationTrendTitle')}</Title>
+                <Text size="sm" c="dimmed">
+                  {t('averageGrade')} {evaluationTrend[evaluationTrend.length - 1].average.toFixed(2)}
+                </Text>
+              </Group>
+              <div style={{ width: '100%', height: 280 }}>
+                <ResponsiveContainer>
+                  <LineChart data={evaluationTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+                    <XAxis dataKey="dateLabel" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      domain={[1, 5]}
+                      ticks={[1, 2, 3, 4, 5]}
+                      tick={{ fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<TrendTooltip />} cursor={{ stroke: '#ced4da' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="average"
+                      stroke="#228be6"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: '#228be6' }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          ) : (
+            <Text c="dimmed" ta="center">{t('noEvaluationData')}</Text>
+          )}
+
           {/* Controls Bar */}
           <Card withBorder shadow="md" radius="md" bg="var(--mantine-color-blue-light)">
             <Stack gap="sm">

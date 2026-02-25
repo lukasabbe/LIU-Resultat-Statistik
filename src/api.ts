@@ -13,12 +13,19 @@ export interface CourseModule {
   grades: Grade[];
 }
 
+export interface EvaluationReport {
+  reportId: number;
+  reportDate: string;
+  scores: Record<string, number>;
+}
+
 export interface CourseData {
   courseCode: string;
   courseNameSwe: string;
   courseNameEng: string;
   lastUpdatedTimestamp: string;
   modules: CourseModule[];
+  evaluationReports?: EvaluationReport[];
 }
 
 const API_URL = 'https://liutentor.lukasabbe.com';

@@ -28,7 +28,11 @@ i18n
           tooltipQty: "Quantity",
           tooltipPerc: "Percentage",
           date: "Date",
-          students: "Students"
+          students: "Students",
+          evaluationTrendTitle: "Course Grade Trend",
+          averageGrade: "Average grade",
+          responses: "Responses",
+          noEvaluationData: "No course evaluations available yet."
         }
       },
       sv: {
@@ -46,7 +50,11 @@ i18n
           tooltipQty: "Antal",
           tooltipPerc: "Andel",
           date: "Datum",
-          students: "Studenter"
+          students: "Studenter",
+          evaluationTrendTitle: "Trend for kursbetyg",
+          averageGrade: "Snittbetyg",
+          responses: "Svar",
+          noEvaluationData: "Inga kursutvarderingar finns an."
         }
       }
     }
